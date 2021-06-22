@@ -1,0 +1,236 @@
+
+!
+! No configuration change since last restart
+version 15.1
+no service pad
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+service internal
+!
+hostname C887VA
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 51200 warnings
+enable secret 4 
+enable password 
+!
+no aaa new-model
+clock timezone EST 10 0
+clock summer-time DST recurring 1 Sun Oct 2:00 1 Sun Apr 3:00
+crypto pki token default removal timeout 0
+!
+crypto pki trustpoint TP-self-signed-59238570
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-59238570
+ revocation-check none
+ rsakeypair TP-self-signed-59238570
+!
+!
+crypto pki certificate chain TP-self-signed-59238570
+ certificate self-signed 01
+  30820227 30820190 A0030201 02020101 300D0609 2A864886 F70D0101 05050030 
+  2F312D30 2B060355 04031324 494F532D 53656C66 2D536967 6E65642D 43657274 
+  69666963 6174652D 35393233 38353730 301E170D 31323038 31373034 30353134 
+  5A170D32 30303130 31303030 3030305A 302F312D 302B0603 55040313 24494F53 
+  2D53656C 662D5369 676E6564 2D436572 74696669 63617465 2D353932 33383537 
+  3030819F 300D0609 2A864886 F70D0101 01050003 818D0030 81890281 8100B665 
+  DC67AF89 C411C02F F0E28C88 6644613F 633F35CA 9ADEDCCA 293C1ABD F753F84C 
+  0A1530A5 2B630BDD 618063B8 EDA32E91 11BC5861 83B919DB 70C2CB69 E074902D 
+  42C0D8E2 30F5F716 48910D7E EA742CAC F1365085 551A9D5A F8C8B577 DFA1BB2B 
+  323A825F 1844A70F A62BC40B A49C4252 9FD3B5DA FADE0CC9 27DA2CE9 6EE50203 
+  010001A3 53305130 0F060355 1D130101 FF040530 030101FF 301F0603 551D2304 
+  18301680 1496CC75 6AC7F9ED E0A7C4E5 56597498 863FAB63 EE301D06 03551D0E 
+  04160414 96CC756A C7F9EDE0 A7C4E556 59749886 3FAB63EE 300D0609 2A864886 
+  F70D0101 05050003 81810020 6D7B3767 433F65A5 DE46F4F3 3FED8096 F6369545 
+  0BA7DA36 1C4662B8 5E078087 08089D78 144818BF 41A6955D 9FA94F27 95A854ED 
+  4B59CA60 4EE8D509 4446ACEF 0155115D 78DE9DD7 4A1EC7F3 593103FD FA85EC47 
+  2430D66A E0BAACB5 516E03D9 183A8FA2 7F5547C7 FCB9ED84 401F21F2 252F8B09 
+  C3D4FE55 D1709C03 8B5A5E
+  	quit
+ip source-route
+ip cef
+!
+!
+!
+ip dhcp excluded-address 10.10.10.1 10.10.10.20
+ip dhcp excluded-address 192.168.1.1 192.168.1.20
+!
+ip dhcp pool DHCP-POOL
+ import all
+ network 10.10.10.0 255.255.255.0
+ default-router 10.10.10.1 
+ dns-server 192.231.203.132 192.231.203.3 
+ domain-name home.local
+ lease 7
+!
+ip dhcp pool GUEST-POOL
+ network 192.168.1.0 255.255.255.0
+ default-router 192.168.1.1 
+ dns-server 64.145.73.5 209.107.219.5 
+ lease 3
+!
+!
+ip domain name home.local
+ip inspect WAAS flush-timeout 10
+no ipv6 cef
+!
+!
+password encryption aes
+license udi pid C887VA-W-A-K9 sn FTX1633850X
+!
+!
+username admin privilege 15 secret 4 
+!
+!
+!
+!
+controller VDSL 0
+!
+ip ssh version 2
+! 
+!
+!
+bridge irb
+!
+!
+!
+!
+interface ATM0
+ description INTERNODE
+ no ip address
+ no atm ilmi-keepalive
+ pvc 8/35 
+  encapsulation aal5mux ppp dialer
+  dialer pool-member 1
+ !
+!
+interface Ethernet0
+ no ip address
+ no fair-queue
+!
+interface FastEthernet0
+ no ip address
+!
+interface FastEthernet1
+ no ip address
+!
+interface FastEthernet2
+ no ip address
+!
+interface FastEthernet3
+ no ip address
+!
+interface Wlan-GigabitEthernet0
+ description Internal switch interface connecting to the embedded AP
+ switchport mode trunk
+ no ip address
+!
+interface wlan-ap0
+ description Service module interface to manage the embedded AP
+ ip unnumbered Vlan1
+!
+interface Vlan1
+ description LOCAL-NETWORK
+ ip address pool DHCP-POOL
+ ip flow ingress
+ ip nat inside
+ ip virtual-reassembly in
+ ip tcp adjust-mss 1412
+!
+interface Vlan2
+ description GUEST-VLAN
+ ip address 192.168.1.1 255.255.255.0
+ ip access-group 169 in
+ ip flow ingress
+ ip nat inside
+ ip virtual-reassembly in
+ ip tcp adjust-mss 1412
+!
+interface Dialer0
+ bandwidth inherit
+ ip address negotiated
+ ip access-group 103 out
+ ip nat outside
+ ip virtual-reassembly in
+ encapsulation ppp
+ ip tcp header-compression iphc-format
+ ip tcp adjust-mss 1452
+ dialer pool 1
+ dialer idle-timeout 0
+ dialer-group 1
+ ppp chap hostname 
+ ppp chap password 0 
+ ppp pap sent-username
+ ppp ipcp dns request
+ ppp ipcp route default
+ ppp ipcp address accept
+ no cdp enable
+ ip rtp header-compression iphc-format
+!
+ip forward-protocol nd
+ip http server
+ip http access-class 23
+ip http authentication local
+no ip http secure-server
+ip http timeout-policy idle 60 life 86400 requests 10000
+!
+ip dns server
+ip nat inside source route-map TBB interface Dialer0 overload
+ip route 0.0.0.0 0.0.0.0 Dialer0
+!
+access-list 103 remark netflix
+access-list 103 deny   ip any host 8.8.8.8
+access-list 103 deny   ip any host 8.8.4.4
+access-list 103 deny   ip any host 23.246.0.0
+access-list 103 deny   ip any host 37.77.184.0
+access-list 103 deny   ip any host 45.57.0.0
+access-list 103 deny   ip any host 108.175.32.0
+access-list 103 deny   ip any host 185.2.220.0
+access-list 103 deny   ip any host 198.38.96.0
+access-list 103 deny   ip any host 198.45.48.0
+access-list 103 permit ip any any
+access-list 151 permit ip 10.10.10.0 0.0.0.255 any
+access-list 155 permit ip 192.168.1.0 0.0.0.255 any
+access-list 169 deny   ip 192.168.1.0 0.0.0.255 10.10.10.0 0.0.0.255
+access-list 169 permit ip any any
+dialer-list 1 protocol ip permit
+no cdp run
+!
+!
+!
+!
+route-map TBB permit 10
+ match ip address 151 155
+!
+bridge 1 protocol ieee
+!
+line con 0
+ logging synchronous
+ login local
+ transport output all
+line aux 0
+ login
+ transport output all
+line 2
+ no activation-character
+ no exec
+ transport preferred none
+ transport input all
+ stopbits 1
+line vty 0 4
+ access-class 23 in
+ privilege level 15
+ password 
+ login local
+ transport input ssh
+ transport output all
+!
+scheduler max-task-time 5000
+scheduler allocate 20000 1000
+ntp server 1.au.pool.ntp.org
+ntp server 0.au.pool.ntp.org
+end
